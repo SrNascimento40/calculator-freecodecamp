@@ -19,6 +19,7 @@ function reducer(state, { type, payload }) {
           ...state,
           currentOperand: payload.digit,
           overwrite: false,
+          choosing: false,
         };
       }
       if (payload.digit === "0" && state.currentOperand === "0") {
@@ -30,11 +31,13 @@ function reducer(state, { type, payload }) {
       if (state.currentOperand == "0") {
         return {
           currentOperand: `${payload.digit}`,
+          choosing: false,
         };
       }
       return {
         ...state,
         currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+        choosing: false,
       };
 
     case ACTIONS.CLEAR:
@@ -42,6 +45,7 @@ function reducer(state, { type, payload }) {
         currentOperand: "0",
         previousOperand: null,
         operation: null,
+        choosing: false,
       };
 
     case ACTIONS.DELETE_DIGIT:
@@ -50,6 +54,7 @@ function reducer(state, { type, payload }) {
           ...state,
           overwrite: false,
           currentOperand: null,
+          choosing: false,
         };
       }
       if (state.currentOperand == null) return state;
@@ -57,16 +62,18 @@ function reducer(state, { type, payload }) {
         return {
           ...state,
           currentOperand: null,
+          choosing: false,
         };
       }
       return {
         ...state,
         currentOperand: state.currentOperand.slice(0, -1),
+        choosing: false,
       };
 
     case ACTIONS.CHOOSE_OPERATION:
       if (state.currentOperand == null && state.previousOperand == null) {
-        return state;
+        return { ...state, choosing: true };
       }
       if (state.previousOperand == null) {
         return {
@@ -74,14 +81,47 @@ function reducer(state, { type, payload }) {
           operation: payload.operation,
           previousOperand: state.currentOperand,
           currentOperand: null,
+          choosing: true,
         };
       }
 
+      console.log(
+        "else case\nCurrent operand: ",
+        state.currentOperand,
+        "\nprevious operand: ",
+        state.previousOperand,
+        "\npayload.operation: ",
+        payload.operation,
+        "\nstate.operation: ",
+        state.operation,
+        "\nchoosing:",
+        state.choosing
+      );
+
+      if (state.choosing) {
+        if (payload.operation === "-") {
+          return {
+            ...state,
+            previousOperand: state.previousOperand,
+            operation: state.operation,
+            currentOperand: "-",
+            choosing: true,
+          };
+        }
+        return {
+          ...state,
+          previousOperand: state.previousOperand,
+          operation: payload.operation,
+          currentOperand: null,
+          choosing: true,
+        };
+      }
       return {
         ...state,
         previousOperand: evaluate(state),
         operation: payload.operation,
         currentOperand: null,
+        choosing: false,
       };
 
     case ACTIONS.EVALUATE:
@@ -91,6 +131,7 @@ function reducer(state, { type, payload }) {
         previousOperand: null,
         operation: null,
         currentOperand: evaluate(state),
+        choosing: false,
       };
   }
 }
